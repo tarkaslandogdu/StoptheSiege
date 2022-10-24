@@ -8,17 +8,20 @@ public class CoordinateLabeler : MonoBehaviour
 {
     [SerializeField] Color defaultColor = Color.white;
     [SerializeField] Color blockedColor = Color.gray;
+    [SerializeField] Color exploredColor = Color.yellow;
+    [SerializeField] Color pathColor = Color.blue;
+
 
     TextMeshPro label;
-    Vector2Int coortinates = new Vector2Int();
-    Waypoint waypoint;
+    Vector2Int coordinates = new Vector2Int();
+    GridManager gridManager;
 
     void Awake()
     {
+        gridManager = FindObjectOfType<GridManager>();
         label = GetComponent<TextMeshPro>();
         label.enabled = false;
 
-        waypoint = GetComponentInParent<Waypoint>();
         DisplayCoordinates();
     }
     void Update()
@@ -44,26 +47,42 @@ public class CoordinateLabeler : MonoBehaviour
 
     void DisplayCoordinates()
     {
-        coortinates.x = Mathf.RoundToInt(transform.parent.position.x / 10);
-        coortinates.y = Mathf.RoundToInt(transform.parent.position.z / 10);
+        if (gridManager == null) { return; }
 
-        label.text = $"{coortinates.x},{coortinates.y}";
+        coordinates.x = Mathf.RoundToInt(transform.parent.position.x / gridManager.UnityGridSize);
+        coordinates.y = Mathf.RoundToInt(transform.parent.position.z / gridManager.UnityGridSize);
+
+        label.text = $"{coordinates.x},{coordinates.y}";
     }
 
     void SetLabelColor()
     {
-        if (waypoint.IsPlaceable)
+        if (gridManager == null) { return; }
+
+        Node node = gridManager.GetNode(coordinates);
+
+        if (node == null) { return; }
+
+        if (!node.isWalkable)
         {
-            label.color = defaultColor;
+            label.color = blockedColor;
+        }
+        else if (node.isPath)
+        {
+            label.color = pathColor;
+        }
+        else if (node.isExplored)
+        {
+            label.color = exploredColor;
         }
         else
         {
-            label.color = blockedColor;
+            label.color = defaultColor;
         }
     }
 
     void UpdateObjectName()
     {
-        transform.parent.name = coortinates.ToString();
+        transform.parent.name = coordinates.ToString();
     }
 }
